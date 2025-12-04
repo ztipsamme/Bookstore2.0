@@ -17,24 +17,21 @@ public class InventoryManager
         while (true)
         {
             var store = SelectStore();
-            if (store == null)
-            {
-                Console.WriteLine("Invalid choice");
-                ConsoleHelper.PressAnyKeyToContinue();
-                continue;
-            }
+            var selectedStore = store.selectedStore;
+            if (store.isBack) return;
+            if (selectedStore == null) continue;
 
             while (true)
             {
-                ShowInventory(store);
+                ShowInventory(selectedStore);
 
                 var choice = InventoryMenu();
                 if (choice == "back") break;
 
                 if (choice == "1")
-                    AddBookToStore(store.StoreId);
+                    AddBookToStore(selectedStore.StoreId);
                 else if (choice == "2")
-                    RemoveBookFromStore(store.StoreId);
+                    RemoveBookFromStore(selectedStore.StoreId);
                 else
                 {
                     Console.WriteLine("Invalid choice");
@@ -44,7 +41,7 @@ public class InventoryManager
         }
     }
 
-    private Store? SelectStore()
+    private (Store? selectedStore, bool isBack) SelectStore()
     {
         Console.Clear();
         Console.WriteLine("=== Stores ===\n");
@@ -57,11 +54,19 @@ public class InventoryManager
         Console.WriteLine("[back]. Back");
 
         string? choice = ConsoleHelper.Choice();
-        if (choice?.ToLower() == "back") return null;
-        if (!ConsoleHelper.IsValidChoice(choice, stores)) return null;
+        if (choice?.ToLower() == "back")
+        {
+            return (null, true);
+        }
+        if (!ConsoleHelper.IsValidChoice(choice, stores))
+        {
+            Console.WriteLine("Invalid choice");
+            ConsoleHelper.PressAnyKeyToContinue();
+            return (null, false);
+        }
 
         int index = int.Parse(choice!) - 1;
-        return stores[index];
+        return (stores[index], false);
     }
 
     private void ShowInventory(Store store)
