@@ -125,7 +125,7 @@ public class BookManager
 
         if (ConsoleHelper.IsActionCanceled(lastName)) return null;
 
-        if (_db.Authors.FirstOrDefault(a => a.FirstName == firstName && a.LastName == lastName) == null)
+        if (_db.Authors.Any(a => a.FirstName == firstName && a.LastName == lastName))
         {
             Console.WriteLine("Author already exists.");
             return null;
@@ -167,7 +167,7 @@ public class BookManager
 
         if (ConsoleHelper.IsActionCanceled(name)) return null;
 
-        if (_db.Publishers.FirstOrDefault(p => p.Name == name) != null)
+        if (_db.Publishers.Any(p => p.Name == name))
         {
             Console.WriteLine("Publisher already exists.");
             return null;
