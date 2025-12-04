@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Bookstore2._0;
 
@@ -19,15 +20,17 @@ public static class ConsoleHelper
         Console.ReadKey();
     }
 
-    public static T AskUntilValid<T>(string prompt, string errMessage, Func<string, bool>? validate = null, Func<string, T>? convert = null)
+    public static T? AskUntilValid<T>(string prompt, string errMessage, Func<string, bool>? validate = null, Func<string, T>? convert = null)
     {
         int startRow = GetStartRow;
+        string input = "";
 
         while (true)
         {
-            Console.Write($"{prompt}: ");
+            var res = HandleInput(prompt, input);
+            input = res.input;
 
-            string input = Console.ReadLine() ?? "";
+            if (res.isCanceled) return default;
 
             bool isValid = validate?.Invoke(input) ?? !string.IsNullOrWhiteSpace(input);
 
@@ -44,6 +47,49 @@ public static class ConsoleHelper
         }
     }
 
+    private static (string input, bool isCanceled) HandleInput(string prompt, string input)
+    {
+        bool isCanceled = false;
+
+        Console.Write($"{prompt}: {input}");
+        ConsoleKeyInfo keyInfo;
+
+        while (true)
+        {
+            keyInfo = Console.ReadKey(intercept: true);
+            if (keyInfo.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                break;
+            }
+            else if (keyInfo.Key == ConsoleKey.Escape)
+            {
+                Console.WriteLine("\nInput canceled. Returning.");
+                Thread.Sleep(1600);
+                isCanceled = true;
+                break;
+            }
+            else if (keyInfo.Key == ConsoleKey.Backspace && input.Length > 0)
+            {
+                input = input[..^1];
+                Console.Write("\b \b");
+            }
+            else if (!char.IsControl(keyInfo.KeyChar))
+            {
+                input += keyInfo.KeyChar;
+                Console.Write(keyInfo.KeyChar);
+            }
+        }
+
+        return (input, isCanceled);
+    }
+
+    public static bool IsActionCanceled<T>(T? input)
+    {
+        bool isDefaultNum = (input is long l && l == 0) || (input is int i && i == 0);
+
+        return input == null || isDefaultNum;
+    }
     public static int GetStartRow => Console.GetCursorPosition().Top;
     public static void ClearRow(int? startRow = null)
     {

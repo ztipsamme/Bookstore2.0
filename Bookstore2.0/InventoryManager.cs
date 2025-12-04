@@ -33,7 +33,7 @@ public class InventoryManager
 
                 if (choice == "1")
                     AddBookToStore(store.StoreId);
-                if (choice == "2")
+                else if (choice == "2")
                     RemoveBookFromStore(store.StoreId);
                 else
                 {
@@ -123,11 +123,15 @@ public class InventoryManager
          input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Where(b => b.Isbn13 == value) != null,
          input => long.Parse(input));
 
+        if (ConsoleHelper.IsActionCanceled(isbn13)) return;
+
         int quantity = ConsoleHelper.AskUntilValid("Quantity",
         "Invalid quantity. Quantity must be greater than 0",
         input => int.TryParse(input, out int value) && value > 0,
         input => int.Parse(input));
 
+
+        if (ConsoleHelper.IsActionCanceled(quantity)) return;
 
         var inventory = _db.Inventories
         .FirstOrDefault(ls => ls.StoreId == storeId && ls.Isbn13 == isbn13);
@@ -166,14 +170,13 @@ public class InventoryManager
     private void RemoveBookFromStore(int storeId)
     {
         Console.WriteLine("\n--- Remove book from store ---\n");
-        Console.Write("ISBN13: ");
 
-        if (!long.TryParse(Console.ReadLine(), out long isbn13))
-        {
-            Console.WriteLine("Invalid ISBN.");
-            ConsoleHelper.PressAnyKeyToContinue();
-            return;
-        }
+        long isbn13 = ConsoleHelper.AskUntilValid("ISBN13",
+        "Invalid ISBN13, no book matches the value. ISBN13 must contain 13 integers.",
+        input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Where(b => b.Isbn13 == value) != null,
+        input => long.Parse(input));
+
+        if (ConsoleHelper.IsActionCanceled(isbn13)) return;
 
         var inventory = _db.Inventories
             .FirstOrDefault(i => i.StoreId == storeId && i.Isbn13 == isbn13);
