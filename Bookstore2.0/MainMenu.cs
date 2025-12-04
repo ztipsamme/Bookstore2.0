@@ -21,7 +21,7 @@ public class MainMenu
         List<Menu> menu = new()
         {
             new ("List inventory balance", ListInventoryBalance),
-            new ("Handle books", HandleBooks),
+            new ("Manage books", HandleBooks),
         };
 
         while (true)
@@ -31,7 +31,7 @@ public class MainMenu
                 Console.WriteLine($"{i + 1}. {menu[i].Name}");
 
             string? choice = ConsoleHelper.Choice();
-            if (!ConsoleHelper.ValidateChoice(choice, menu))
+            if (ConsoleHelper.IsValidChoice(choice, menu))
             {
                 int value = int.Parse(choice!);
                 menu[value - 1].Method();
@@ -39,7 +39,7 @@ public class MainMenu
             else
             {
                 Console.WriteLine("Invalid choice");
-                return;
+                ConsoleHelper.PressAnyKeyToContinue();
             }
         }
     }

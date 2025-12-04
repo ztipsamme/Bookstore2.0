@@ -17,7 +17,12 @@ public class InventoryManager
         while (true)
         {
             var store = SelectStore();
-            if (store == null) return;
+            if (store == null)
+            {
+                Console.WriteLine("Invalid choice");
+                ConsoleHelper.PressAnyKeyToContinue();
+                continue;
+            }
 
             while (true)
             {
@@ -30,6 +35,11 @@ public class InventoryManager
                     AddBookToStore(store.StoreId);
                 if (choice == "2")
                     RemoveBookFromStore(store.StoreId);
+                else
+                {
+                    Console.WriteLine("Invalid choice");
+                    ConsoleHelper.PressAnyKeyToContinue();
+                }
             }
         }
     }
@@ -48,7 +58,7 @@ public class InventoryManager
 
         string? choice = ConsoleHelper.Choice();
         if (choice?.ToLower() == "back") return null;
-        if (ConsoleHelper.ValidateChoice(choice, stores)) return null;
+        if (!ConsoleHelper.IsValidChoice(choice, stores)) return null;
 
         int index = int.Parse(choice!) - 1;
         return stores[index];
@@ -69,6 +79,9 @@ public class InventoryManager
         if (items.Count == 0)
         {
             Console.WriteLine("Inventory is empty\n");
+
+            Console.WriteLine("Invalid choice");
+            ConsoleHelper.PressAnyKeyToContinue();
             return;
         }
 
@@ -93,7 +106,10 @@ public class InventoryManager
         Console.WriteLine("[back]. Back");
 
         string? choice = ConsoleHelper.Choice();
-        if (choice == null) return "back";
+        if (choice == null)
+        {
+            return "";
+        }
         return choice.ToLower();
     }
 
@@ -102,16 +118,20 @@ public class InventoryManager
         Console.WriteLine("\n--- Add book to store ---\n");
         Console.WriteLine("Add a book that already exists in books\n");
 
+        long isbn13 = ConsoleHelper.AskUntilValid("ISBN13",
+         "Invalid ISBN13, no book matches the value. ISBN13 must contain 13 integers.",
+         input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Where(b => b.Isbn13 == value) != null,
+         input => long.Parse(input));
 
-        Console.Write("ISBN13: ");
-        long isbn13 = long.Parse(Console.ReadLine());
-
-        Console.Write("Quantity: ");
-        int quantity = int.Parse(Console.ReadLine());
+        int quantity = ConsoleHelper.AskUntilValid("Quantity",
+        "Invalid quantity. Quantity must be greater than 0",
+        input => int.TryParse(input, out int value) && value > 0,
+        input => int.Parse(input));
 
 
         var inventory = _db.Inventories
-     .FirstOrDefault(ls => ls.StoreId == storeId && ls.Isbn13 == isbn13);
+        .FirstOrDefault(ls => ls.StoreId == storeId && ls.Isbn13 == isbn13);
+
         var books = _db.Books.Where(b => b.Isbn13 == isbn13);
         var store = _db.Stores.Include(s => s.Inventories).ThenInclude(i => i.Isbn13Navigation).First(s => s.StoreId == storeId);
 
@@ -125,20 +145,22 @@ public class InventoryManager
             };
 
             _db.Inventories.Add(inventory);
-            Console.WriteLine("\nIncreased quantity of the book successfully.");
-        }
-        else if (books == null)
-        {
-            Console.WriteLine("\nCan't add non existing book. Please enter the ISBN of an existing book or use \"Add new book title\" to add the book to the existing titles");
-            ConsoleHelper.PressAnyKey();
         }
         else
         {
             inventory.Quantity += quantity;
-            Console.WriteLine("Added book(s) successfully.");
         }
 
-        _db.SaveChanges();
+        try
+        {
+            _db.SaveChanges();
+            Console.WriteLine("Added book(s) successfully.");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("Database could not be updated.");
+            Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+        }
     }
 
     private void RemoveBookFromStore(int storeId)
@@ -149,7 +171,7 @@ public class InventoryManager
         if (!long.TryParse(Console.ReadLine(), out long isbn13))
         {
             Console.WriteLine("Invalid ISBN.");
-            ConsoleHelper.PressAnyKey();
+            ConsoleHelper.PressAnyKeyToContinue();
             return;
         }
 
@@ -159,7 +181,7 @@ public class InventoryManager
         if (inventory == null)
         {
             Console.WriteLine("\nBook does not exist in this store's inventory.");
-            ConsoleHelper.PressAnyKey();
+            ConsoleHelper.PressAnyKeyToContinue();
             return;
         }
 
@@ -181,14 +203,14 @@ public class InventoryManager
         if (!int.TryParse(Console.ReadLine(), out int amount) || amount < 1)
         {
             Console.WriteLine("Invalid quantity.");
-            ConsoleHelper.PressAnyKey();
+            ConsoleHelper.PressAnyKeyToContinue();
             return;
         }
 
         if (amount > inventory.Quantity)
         {
             Console.WriteLine("\nCannot decrease below zero. Try again.");
-            ConsoleHelper.PressAnyKey();
+            ConsoleHelper.PressAnyKeyToContinue();
             return;
         }
 
@@ -202,7 +224,7 @@ public class InventoryManager
         {
             Console.WriteLine("\nDecreased quantity successfully.");
             _db.SaveChanges();
-            ConsoleHelper.PressAnyKey();
+            ConsoleHelper.PressAnyKeyToContinue();
         }
     }
     private void AskToDeleteInventoryRow(Inventory inventory)
@@ -224,6 +246,6 @@ public class InventoryManager
         }
 
         _db.SaveChanges();
-        ConsoleHelper.PressAnyKey();
+        ConsoleHelper.PressAnyKeyToContinue();
     }
 }
