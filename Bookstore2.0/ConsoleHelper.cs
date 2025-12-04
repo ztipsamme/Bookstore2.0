@@ -40,7 +40,7 @@ public static class ConsoleHelper
                 return (T)(object)input;
             }
 
-            Console.WriteLine($"{errMessage} Try again.");
+            Console.WriteLine($"{errMessage}");
             Thread.Sleep(1600);
 
             ClearBelow(startRow - 1);
@@ -88,7 +88,7 @@ public static class ConsoleHelper
     {
         bool isDefaultNum = (input is long l && l == 0) || (input is int i && i == 0);
 
-        return input == null || isDefaultNum;
+        return input == null || isDefaultNum || input is bool b && b == true;
     }
     public static int GetStartRow => Console.GetCursorPosition().Top;
     public static void ClearRow(int? startRow = null)

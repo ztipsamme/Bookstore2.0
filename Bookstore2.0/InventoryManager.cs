@@ -125,7 +125,7 @@ public class InventoryManager
 
         long isbn13 = ConsoleHelper.AskUntilValid("ISBN13",
          "Invalid ISBN13, no book matches the value. ISBN13 must contain 13 integers.",
-         input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Where(b => b.Isbn13 == value) != null,
+         input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Any(b => b.Isbn13 == value),
          input => long.Parse(input));
 
         if (ConsoleHelper.IsActionCanceled(isbn13)) return;
@@ -178,7 +178,7 @@ public class InventoryManager
 
         long isbn13 = ConsoleHelper.AskUntilValid("ISBN13",
         "Invalid ISBN13, no book matches the value. ISBN13 must contain 13 integers.",
-        input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Where(b => b.Isbn13 == value) != null,
+        input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Any(b => b.Isbn13 == value),
         input => long.Parse(input));
 
         if (ConsoleHelper.IsActionCanceled(isbn13)) return;
