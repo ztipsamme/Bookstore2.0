@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Bookstore2._0.Models;
 
 namespace Bookstore2._0.Ui;
@@ -6,21 +7,25 @@ namespace Bookstore2._0.Ui;
 public class MainMenu
 {
     private readonly Bookstore2Context _db;
+    private readonly DbService _dbService;
+
     private readonly InventoryManager _inventoryManager;
     private readonly BookManager _booksManager;
 
-    public MainMenu(Bookstore2Context db)
+    public MainMenu(Bookstore2Context db, DbService dbService)
     {
         _db = db;
-        _inventoryManager = new InventoryManager(_db);
-        _booksManager = new BookManager(_db);
+        _dbService = dbService;
+
+        _inventoryManager = new InventoryManager(db, dbService);
+        _booksManager = new BookManager(db, dbService);
     }
 
-    public void Show()
+    public async Task Show()
     {
         List<Menu> menu = new()
         {
-            new ("List inventory balance", ListInventoryBalance),
+            new ("List inventory balance", async () => await ListInventoryBalance()),
             new ("Manage books", HandleBooks),
         };
 
@@ -31,26 +36,28 @@ public class MainMenu
                 Console.WriteLine($"{i + 1}. {menu[i].Name}");
 
             string? choice = ConsoleHelper.Choice();
-            if (ConsoleHelper.IsValidChoice(choice, menu))
-            {
-                int value = int.Parse(choice!);
-                menu[value - 1].Method();
-            }
-            else
+
+            if (!ConsoleHelper.IsValidChoice(choice, menu))
             {
                 Console.WriteLine("Invalid choice");
                 ConsoleHelper.PressAnyKeyToContinue();
+                continue;
             }
+
+            int value = int.Parse(choice!);
+            await menu[value - 1].Method();
+
+            ConsoleHelper.PressAnyKeyToContinue();
         }
     }
 
-    private void ListInventoryBalance()
+    private async Task ListInventoryBalance()
     {
-        _inventoryManager.ManageInventory();
+        await _inventoryManager.ManageInventory();
     }
 
-    private void HandleBooks()
+    private async Task HandleBooks()
     {
-        _booksManager.ManageLibrary();
+        await _booksManager.ManageLibrary();
     }
 }

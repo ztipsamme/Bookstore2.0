@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Bookstore2._0.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,32 +7,34 @@ namespace Bookstore2._0;
 public class InventoryManager
 {
     private readonly Bookstore2Context _db;
+    private readonly DbService _dbService;
 
-    public InventoryManager(Bookstore2Context db)
+    public InventoryManager(Bookstore2Context db, DbService dbService)
     {
         _db = db;
+        _dbService = dbService;
     }
 
-    public void ManageInventory()
+    public async Task ManageInventory()
     {
         while (true)
         {
-            var store = SelectStore();
+            var store = await SelectStore();
             var selectedStore = store.selectedStore;
             if (store.isBack) return;
             if (selectedStore == null) continue;
 
             while (true)
             {
-                ShowInventory(selectedStore);
+                await ShowInventory(selectedStore);
 
                 var choice = InventoryMenu();
                 if (choice == "back") break;
 
                 if (choice == "1")
-                    AddBookToStore(selectedStore.StoreId);
+                    await AddBookToStore(selectedStore.StoreId);
                 else if (choice == "2")
-                    RemoveBookFromStore(selectedStore.StoreId);
+                    await RemoveBookFromStore(selectedStore.StoreId);
                 else
                 {
                     Console.WriteLine("Invalid choice");
@@ -41,13 +44,13 @@ public class InventoryManager
         }
     }
 
-    private (Store? selectedStore, bool isBack) SelectStore()
+    private async Task<(Store? selectedStore, bool isBack)> SelectStore()
     {
         Console.Clear();
         Console.WriteLine("=== Stores ===\n");
         Console.WriteLine("Select a store to view its inventory\n");
 
-        var stores = _db.Stores.ToList();
+        var stores = await _dbService.GetAllStores();
 
         for (int i = 0; i < stores.Count; i++)
             Console.WriteLine($"{i + 1}. {stores[i].Name}");
@@ -69,15 +72,11 @@ public class InventoryManager
         return (stores[index], false);
     }
 
-    private void ShowInventory(Store store)
+    private async Task ShowInventory(Store store)
     {
         Console.Clear();
 
-        var items = _db.Inventories
-            .Where(i => i.StoreId == store.StoreId)
-            .Include(i => i.Isbn13Navigation)
-                .ThenInclude(b => b.Author)
-            .ToList();
+        var items = await _dbService.GetStoreInventory(store.StoreId);
 
         Console.WriteLine($"\nInventory for {store.Name}:\n");
 
@@ -118,7 +117,7 @@ public class InventoryManager
         return choice.ToLower();
     }
 
-    private void AddBookToStore(int storeId)
+    private async Task AddBookToStore(int storeId)
     {
         Console.WriteLine("\n--- Add book to store ---\n");
         Console.WriteLine("Add a book that already exists in books\n");
@@ -138,11 +137,10 @@ public class InventoryManager
 
         if (ConsoleHelper.IsActionCanceled(quantity)) return;
 
-        var inventory = _db.Inventories
-        .FirstOrDefault(ls => ls.StoreId == storeId && ls.Isbn13 == isbn13);
+        var inventory = await _dbService.GetBookInInventory(storeId, isbn13);
 
-        var books = _db.Books.Where(b => b.Isbn13 == isbn13);
-        var store = _db.Stores.Include(s => s.Inventories).ThenInclude(i => i.Isbn13Navigation).First(s => s.StoreId == storeId);
+        var books = await _dbService.GetBook(isbn13);
+        var store = await _dbService.GetStore(storeId);
 
         if (inventory == null)
         {
@@ -172,7 +170,7 @@ public class InventoryManager
         }
     }
 
-    private void RemoveBookFromStore(int storeId)
+    private async Task RemoveBookFromStore(int storeId)
     {
         Console.WriteLine("\n--- Remove book from store ---\n");
 
@@ -183,8 +181,7 @@ public class InventoryManager
 
         if (ConsoleHelper.IsActionCanceled(isbn13)) return;
 
-        var inventory = _db.Inventories
-            .FirstOrDefault(i => i.StoreId == storeId && i.Isbn13 == isbn13);
+        var inventory = await _dbService.GetBookInInventory(storeId, isbn13);
 
         if (inventory == null)
         {
@@ -193,16 +190,16 @@ public class InventoryManager
             return;
         }
 
-        HandleRemovalOrDecrease(inventory);
+        await HandleRemovalOrDecrease(inventory);
     }
 
-    private void HandleRemovalOrDecrease(Inventory inventory)
+    private async Task HandleRemovalOrDecrease(Inventory inventory)
     {
         Console.WriteLine($"\nCurrent quantity: {inventory.Quantity}");
 
         if (inventory.Quantity == 0)
         {
-            AskToDeleteInventoryRow(inventory);
+            await AskToDeleteInventoryRow(inventory);
             return;
         }
 
@@ -226,7 +223,7 @@ public class InventoryManager
 
         if (inventory.Quantity == 0)
         {
-            AskToDeleteInventoryRow(inventory);
+            await AskToDeleteInventoryRow(inventory);
         }
         else
         {
@@ -235,7 +232,7 @@ public class InventoryManager
             ConsoleHelper.PressAnyKeyToContinue();
         }
     }
-    private void AskToDeleteInventoryRow(Inventory inventory)
+    private async Task AskToDeleteInventoryRow(Inventory inventory)
     {
         Console.WriteLine("\nQuantity is now 0.");
         Console.WriteLine("Would you like to remove this book entirely from the inventory list?");
@@ -245,7 +242,7 @@ public class InventoryManager
 
         if (choice?.ToLower() == "yes")
         {
-            _db.Inventories.Remove(inventory);
+            await _dbService.DeleteInventory(inventory.StoreId, inventory.Isbn13);
             Console.WriteLine("\nBook removed from inventory entirely.");
         }
         else
@@ -253,7 +250,6 @@ public class InventoryManager
             Console.WriteLine("\nInventory entry kept with quantity 0.");
         }
 
-        _db.SaveChanges();
         ConsoleHelper.PressAnyKeyToContinue();
     }
 }

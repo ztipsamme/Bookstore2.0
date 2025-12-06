@@ -20,10 +20,10 @@ public static class ConsoleHelper
         Console.ReadKey();
     }
 
-    public static T? AskUntilValid<T>(string prompt, string errMessage, Func<string, bool>? validate = null, Func<string, T>? convert = null)
+    public static T? AskUntilValid<T>(string prompt, string errMessage, Func<string, bool>? validate = null, Func<string, T>? convert = null, string defaultInput = "")
     {
         int startRow = GetStartRow;
-        string input = "";
+        string input = defaultInput;
 
         while (true)
         {
