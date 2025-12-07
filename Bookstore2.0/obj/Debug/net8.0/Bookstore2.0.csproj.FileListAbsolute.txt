@@ -130,3 +130,9 @@
 /Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/obj/Debug/net8.0/Bookstore2.0.genruntimeconfig.cache
 /Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/obj/Debug/net8.0/ref/Bookstore2.0.dll
 /Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/obj/Debug/net8.0/Bookstore2.0.sourcelink.json
+/Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/bin/Debug/net8.0/Microsoft.Extensions.Configuration.dll
+/Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/bin/Debug/net8.0/Microsoft.Extensions.Configuration.FileExtensions.dll
+/Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Json.dll
+/Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/bin/Debug/net8.0/Microsoft.Extensions.FileProviders.Abstractions.dll
+/Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/bin/Debug/net8.0/Microsoft.Extensions.FileProviders.Physical.dll
+/Users/emmaspitz/Documents/Skola/ITHS/dotNetCloud/databashantering/Bookstore2.0/Bookstore2.0/bin/Debug/net8.0/Microsoft.Extensions.FileSystemGlobbing.dll

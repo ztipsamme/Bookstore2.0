@@ -12,24 +12,31 @@ public class DbService
         _db = db;
     }
 
-    public async Task<Book> CreateBook(Book book)
+    public async Task<Book> AddBook(Book book)
     {
         _db.Books.Add(book);
         await _db.SaveChangesAsync();
         return book;
     }
 
-    public async Task<Author> CreateAuthor(Author author)
+    public async Task<Author> AddAuthor(Author author)
     {
         _db.Authors.Add(author);
         await _db.SaveChangesAsync();
         return author;
     }
-    public async Task<Publisher> CreatePublisher(Publisher publisher)
+    public async Task<Publisher> AddPublisher(Publisher publisher)
     {
         _db.Publishers.Add(publisher);
         await _db.SaveChangesAsync();
         return publisher;
+    }
+
+    public async Task<Inventory> AddInventory(Inventory inventory)
+    {
+        _db.Inventories.Add(inventory);
+        await _db.SaveChangesAsync();
+        return inventory;
     }
 
     public async Task<Book?> GetBook(long isbn13)
@@ -57,30 +64,24 @@ public class DbService
         return await _db.Inventories.FindAsync(storeId, isbn13);
     }
 
-    // public async Task<Inventory?> GetBookInInventory(int storeId, long isbn13)
-    // {
-    //     return await _db.Inventories
-    //     .FirstOrDefaultAsync(ls => ls.StoreId == storeId && ls.Isbn13 == isbn13);
-    // }
-
     public async Task<List<Book>> GetAllBooks()
     {
-        return await _db.Books.Include(b => b.Author).Include(b => b.Publisher).ToListAsync();
+        return await _db.Books.AsNoTracking().Include(b => b.Author).Include(b => b.Publisher).ToListAsync();
     }
 
     public async Task<List<Author>> GetAllAuthors()
     {
-        return await _db.Authors.ToListAsync();
+        return await _db.Authors.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Publisher>> GetAllPublishers()
     {
-        return await _db.Publishers.ToListAsync();
+        return await _db.Publishers.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Store>> GetAllStores()
     {
-        return await _db.Stores.ToListAsync();
+        return await _db.Stores.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Inventory>> GetStoreInventory(int storeId)
@@ -91,6 +92,22 @@ public class DbService
                 .ThenInclude(b => b.Author)
             .ToListAsync();
     }
+
+    public async Task<bool> AuthorExists(string firstName, string lastName)
+    {
+        return await _db.Authors.AnyAsync(a => a.FirstName == firstName && a.LastName == lastName);
+    }
+
+    public async Task<bool> BookExists(long isbn13)
+    {
+        return await _db.Books.AnyAsync(b => b.Isbn13 == isbn13);
+    }
+
+    public async Task<bool> PublisherExists(string name)
+    {
+        return await _db.Publishers.AnyAsync(p => p.Name == name);
+    }
+
 
     public async Task<Book> UpdateBook(Book book)
     {
@@ -133,6 +150,8 @@ public class DbService
         if (book == null) return false;
 
         _db.Books.Remove(book);
+        await _db.SaveChangesAsync();
+
         return true;
     }
 
@@ -142,6 +161,7 @@ public class DbService
         if (author == null) return false;
 
         _db.Authors.Remove(author);
+        await _db.SaveChangesAsync();
         return true;
     }
 
@@ -151,6 +171,7 @@ public class DbService
         if (publisher == null) return false;
 
         _db.Publishers.Remove(publisher);
+        await _db.SaveChangesAsync();
         return true;
     }
 
@@ -160,15 +181,25 @@ public class DbService
         if (store == null) return false;
 
         _db.Stores.Remove(store);
+        await _db.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> DeleteInventory(int storeId, long isbn13)
+    public async Task<bool> DeleteRowInInventory(int storeId, long isbn13)
     {
         var inventory = await GetBookInInventory(storeId, isbn13);
         if (inventory == null) return false;
+        await _db.SaveChangesAsync();
+        return true;
+    }
 
-        _db.Inventories.Remove(inventory);
+    public async Task<bool> DeleteBookInAllInventories(long isbn13)
+    {
+        await _db.Inventories
+             .Where(i => i.Isbn13 == isbn13)
+             .ExecuteDeleteAsync();
+
+        await _db.SaveChangesAsync();
         return true;
     }
 }

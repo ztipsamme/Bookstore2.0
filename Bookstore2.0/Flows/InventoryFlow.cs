@@ -1,78 +1,18 @@
 using System.Threading.Tasks;
+using Bookstore2._0.Flows;
 using Bookstore2._0.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore2._0;
 
-public class InventoryManager
+public class InventoryFlow : FlowBase
 {
-    private readonly Bookstore2Context _db;
-    private readonly DbService _dbService;
-
-    public InventoryManager(Bookstore2Context db, DbService dbService)
+    public InventoryFlow(DbService dbService) : base(dbService)
     {
-        _db = db;
-        _dbService = dbService;
+
     }
 
-    public async Task ManageInventory()
-    {
-        while (true)
-        {
-            var store = await SelectStore();
-            var selectedStore = store.selectedStore;
-            if (store.isBack) return;
-            if (selectedStore == null) continue;
-
-            while (true)
-            {
-                await ShowInventory(selectedStore);
-
-                var choice = InventoryMenu();
-                if (choice == "back") break;
-
-                if (choice == "1")
-                    await AddBookToStore(selectedStore.StoreId);
-                else if (choice == "2")
-                    await RemoveBookFromStore(selectedStore.StoreId);
-                else
-                {
-                    Console.WriteLine("Invalid choice");
-                    ConsoleHelper.PressAnyKeyToContinue();
-                }
-            }
-        }
-    }
-
-    private async Task<(Store? selectedStore, bool isBack)> SelectStore()
-    {
-        Console.Clear();
-        Console.WriteLine("=== Stores ===\n");
-        Console.WriteLine("Select a store to view its inventory\n");
-
-        var stores = await _dbService.GetAllStores();
-
-        for (int i = 0; i < stores.Count; i++)
-            Console.WriteLine($"{i + 1}. {stores[i].Name}");
-        Console.WriteLine("[back]. Back");
-
-        string? choice = ConsoleHelper.Choice();
-        if (choice?.ToLower() == "back")
-        {
-            return (null, true);
-        }
-        if (!ConsoleHelper.IsValidChoice(choice, stores))
-        {
-            Console.WriteLine("Invalid choice");
-            ConsoleHelper.PressAnyKeyToContinue();
-            return (null, false);
-        }
-
-        int index = int.Parse(choice!) - 1;
-        return (stores[index], false);
-    }
-
-    private async Task ShowInventory(Store store)
+    public async Task ShowInventory(Store store)
     {
         Console.Clear();
 
@@ -102,7 +42,7 @@ public class InventoryManager
         }
     }
 
-    private string InventoryMenu()
+    public string InventoryMenu()
     {
         Console.WriteLine($"\n--- Inventory Menu ---\n");
         Console.WriteLine("1. Add book to store");
@@ -117,15 +57,12 @@ public class InventoryManager
         return choice.ToLower();
     }
 
-    private async Task AddBookToStore(int storeId)
+    public async Task AddBookToStore(int storeId)
     {
         Console.WriteLine("\n--- Add book to store ---\n");
         Console.WriteLine("Add a book that already exists in books\n");
 
-        long isbn13 = ConsoleHelper.AskUntilValid("ISBN13",
-         "Invalid ISBN13, no book matches the value. ISBN13 must contain 13 integers.",
-         input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Any(b => b.Isbn13 == value),
-         input => long.Parse(input));
+        long isbn13 = await ConsoleHelper.AskUntilValidUniqueIsbn13(_dbService, "ISBN13", "Invalid ISBN13. ISBN13 must be unique and contain 13 integers.");
 
         if (ConsoleHelper.IsActionCanceled(isbn13)) return;
 
@@ -142,25 +79,23 @@ public class InventoryManager
         var books = await _dbService.GetBook(isbn13);
         var store = await _dbService.GetStore(storeId);
 
-        if (inventory == null)
-        {
-            inventory = new Inventory
-            {
-                StoreId = storeId,
-                Isbn13 = isbn13,
-                Quantity = quantity,
-            };
-
-            _db.Inventories.Add(inventory);
-        }
-        else
-        {
-            inventory.Quantity += quantity;
-        }
-
         try
         {
-            _db.SaveChanges();
+            if (inventory == null)
+            {
+                inventory = new Inventory
+                {
+                    StoreId = storeId,
+                    Isbn13 = isbn13,
+                    Quantity = quantity,
+                };
+
+                await _dbService.AddInventory(inventory);
+            }
+            else
+            {
+                inventory.Quantity += quantity;
+            }
             Console.WriteLine("Added book(s) successfully.");
         }
         catch (DbUpdateException ex)
@@ -170,14 +105,11 @@ public class InventoryManager
         }
     }
 
-    private async Task RemoveBookFromStore(int storeId)
+    public async Task RemoveBookFromStore(int storeId)
     {
         Console.WriteLine("\n--- Remove book from store ---\n");
 
-        long isbn13 = ConsoleHelper.AskUntilValid("ISBN13",
-        "Invalid ISBN13, no book matches the value. ISBN13 must contain 13 integers.",
-        input => input.Length == 13 && long.TryParse(input, out long value) && _db.Books.Any(b => b.Isbn13 == value),
-        input => long.Parse(input));
+        long isbn13 = await ConsoleHelper.AskUntilValidUniqueIsbn13(_dbService, "ISBN13", "Invalid ISBN13. ISBN13 must an existing ISBN13.");
 
         if (ConsoleHelper.IsActionCanceled(isbn13)) return;
 
@@ -228,7 +160,6 @@ public class InventoryManager
         else
         {
             Console.WriteLine("\nDecreased quantity successfully.");
-            _db.SaveChanges();
             ConsoleHelper.PressAnyKeyToContinue();
         }
     }
@@ -242,7 +173,7 @@ public class InventoryManager
 
         if (choice?.ToLower() == "yes")
         {
-            await _dbService.DeleteInventory(inventory.StoreId, inventory.Isbn13);
+            await _dbService.DeleteRowInInventory(inventory.StoreId, inventory.Isbn13);
             Console.WriteLine("\nBook removed from inventory entirely.");
         }
         else

@@ -1,4 +1,5 @@
 using System;
+using Bookstore2._0.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Bookstore2._0;
@@ -18,6 +19,57 @@ public static class ConsoleHelper
     {
         Console.Write("\nPress any key to continue...");
         Console.ReadKey();
+    }
+
+    public static async Task ChooseFromMenu(string header, List<MenuItem> menu)
+    {
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine($"=== {header} ===\n");
+
+            for (int i = 0; i < menu.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {menu[i].Name}");
+            }
+            Console.WriteLine("[back]. Back");
+
+            string? choice = Choice();
+            if (choice?.ToLower() == "back") return;
+
+            if (!IsValidChoice(choice, menu))
+            {
+                Console.WriteLine("Invalid choice");
+                PressAnyKeyToContinue();
+                continue;
+            }
+
+            int value = int.Parse(choice!);
+            await menu[value - 1].Method();
+
+            PressAnyKeyToContinue();
+        }
+    }
+
+    public static string? AskUntilValid(string prompt, string errMessage, string defaultInput = "")
+    {
+        int startRow = GetStartRow;
+        string input = defaultInput;
+
+        while (true)
+        {
+            var res = HandleInput(prompt, input);
+            input = res.input;
+
+            if (res.isCanceled) return null;
+
+            if (!string.IsNullOrWhiteSpace(input)) return input;
+
+            Console.WriteLine($"{errMessage}");
+            Thread.Sleep(1600);
+
+            ClearBelow(startRow - 1);
+        }
     }
 
     public static T? AskUntilValid<T>(string prompt, string errMessage, Func<string, bool>? validate = null, Func<string, T>? convert = null, string defaultInput = "")
@@ -45,6 +97,47 @@ public static class ConsoleHelper
 
             ClearBelow(startRow - 1);
         }
+    }
+
+    public static async Task<T?> AskUntilValid<T>(string prompt, string errMessage, Func<string, Task<bool>>? validate = null, Func<string, T>? convert = null, string defaultInput = "")
+    {
+        int startRow = GetStartRow;
+        string input = defaultInput;
+
+        while (true)
+        {
+            var res = HandleInput(prompt, input);
+            input = res.input;
+
+            if (res.isCanceled) return default;
+
+            bool isValid = validate == null
+                ? !string.IsNullOrWhiteSpace(input)
+                : await validate(input);
+
+            if (isValid)
+            {
+                if (convert != null) return convert(input);
+                return (T)(object)input;
+            }
+
+            Console.WriteLine($"{errMessage}");
+            Thread.Sleep(1600);
+
+            ClearBelow(startRow - 1);
+        }
+    }
+
+    public static async Task<long> AskUntilValidUniqueIsbn13(DbService dbService, string prompt, string errMessage)
+    {
+        return await AskUntilValid(prompt, errMessage,
+            async input =>
+            {
+                return input.Length == 13
+                       && long.TryParse(input, out long value)
+                       && await dbService.BookExists(value);
+            },
+            input => long.Parse(input));
     }
 
     private static (string input, bool isCanceled) HandleInput(string prompt, string input)

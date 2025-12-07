@@ -1,11 +1,11 @@
 namespace Bookstore2._0;
 
-public record class Menu
+public record class MenuItem
 {
     public string Name { get; set; }
     public Func<Task> Method { get; set; }
 
-    public Menu(string name, Func<Task> method)
+    public MenuItem(string name, Func<Task> method)
     {
         Name = name;
         Method = method;
