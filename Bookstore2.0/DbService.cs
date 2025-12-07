@@ -113,6 +113,11 @@ public class DbService
         return await _db.Publishers.AnyAsync(p => p.Name == name);
     }
 
+    public async Task<bool> PublisherExists(int publisherId)
+    {
+        return await _db.Publishers.AnyAsync(p => p.PublisherId == publisherId);
+    }
+
 
     public async Task<Book> UpdateBook(Book book)
     {

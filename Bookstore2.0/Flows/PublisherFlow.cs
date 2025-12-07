@@ -25,15 +25,13 @@ public class PublisherFlow : FlowBase
         }
     }
 
-    public async Task<Publisher?> AddNewPublisherToDbFlow()
+    private async Task<Publisher?> AskPublisherDetails(Publisher publisher)
     {
-        Console.WriteLine("=== Add new publisher to the database ===\n");
-
-
         string? name = ConsoleHelper.AskUntilValid("Name",
-          "Invalid name.");
+        "Invalid name.", publisher.Name);
 
         if (name == null || ConsoleHelper.IsActionCanceled(name)) return null;
+
 
         if (await _dbService.PublisherExists(name))
         {
@@ -41,8 +39,18 @@ public class PublisherFlow : FlowBase
             return null;
         }
 
-        var publisher = new Publisher();
         publisher.Name = name;
+
+        return publisher;
+    }
+
+    public async Task<Publisher?> AddNewPublisherToDbFlow()
+    {
+        Console.WriteLine("=== Add new publisher to the database ===\n");
+
+        Publisher? publisher = new Publisher();
+        publisher = await AskPublisherDetails(publisher);
+        if (publisher == null) return null;
 
         try
         {
@@ -56,6 +64,41 @@ public class PublisherFlow : FlowBase
         }
 
         return publisher;
+    }
+
+    public async Task UpdatePublisher()
+    {
+        Console.WriteLine("=== Edit publisher ===\n");
+
+        int selectPublisherId = await ConsoleHelper.AskUntilValid(
+            "Select publisher to edit by publisher id",
+            "Invalid publisher id",
+            async input => await _dbService.PublisherExists(int.Parse(input)),
+            input => int.Parse(input));
+
+        var publisher = await _dbService.GetPublisher(selectPublisherId);
+
+        if (publisher == null)
+        {
+            Console.WriteLine("Couldn't fetch publisher;");
+            return;
+        }
+
+        if (ConsoleHelper.IsActionCanceled(selectPublisherId)) return;
+
+        publisher = await AskPublisherDetails(publisher);
+        if (publisher == null) return;
+
+        try
+        {
+            await _dbService.UpdatePublisher(publisher);
+            Console.WriteLine("Publisher was successfully added");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("Database could not be updated.");
+            Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+        }
     }
 
     public async Task DeletePublisherFlow()

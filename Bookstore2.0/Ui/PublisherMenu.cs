@@ -19,8 +19,8 @@ public class PublisherMenu
             {
                 new ("List all publishers",  () => _publisherFlow
                 .ListAllPublishersFlow()),
-                new ("Add publisher", ()=> _publisherFlow
-                .AddNewPublisherToDbFlow()),
+                new ("Add publisher", ()=> _publisherFlow.AddNewPublisherToDbFlow()),
+                new ("Edit publisher", ()=> _publisherFlow.UpdatePublisher()),
                 new ("Delete author", ()=> _publisherFlow.DeletePublisherFlow()),
             };
 

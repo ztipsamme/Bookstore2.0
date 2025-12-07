@@ -25,18 +25,15 @@ public class AuthorFlow : FlowBase
         }
     }
 
-    public async Task<Author?> AddNewAuthorToDbFlow()
+    private async Task<Author?> AskAuthorDetails(Author author)
     {
-        Console.WriteLine("=== Add new author to the database ===\n");
-
-
         string? firstName = ConsoleHelper.AskUntilValid("First name",
-          "Invalid first name.");
+        "Invalid first name.", author.FirstName);
 
         if (firstName == null || ConsoleHelper.IsActionCanceled(firstName)) return null;
 
         string? lastName = ConsoleHelper.AskUntilValid("Last name",
-        "Invalid Last name.");
+        "Invalid Last name.", author.LastName);
 
         if (lastName == null || ConsoleHelper.IsActionCanceled(lastName)) return null;
 
@@ -49,14 +46,25 @@ public class AuthorFlow : FlowBase
         DateOnly birthday = ConsoleHelper.AskUntilValid("Birthday (yyyy/mm/dd)",
         "Invalid birthday",
         input => DateOnly.TryParse(input, out var value) && value <= DateOnly.FromDateTime(DateTime.Today),
-        input => DateOnly.Parse(input));
+        input => DateOnly.Parse(input), author.Birthday.ToString() ?? "");
 
         if (ConsoleHelper.IsActionCanceled(birthday)) return null;
 
-        var author = new Author();
         author.FirstName = firstName;
         author.LastName = lastName;
         author.Birthday = birthday;
+
+        return author;
+    }
+
+    public async Task<Author?> AddNewAuthorToDbFlow()
+    {
+        Console.WriteLine("=== Add new author to the database ===\n");
+
+        Author? author = new Author();
+
+        author = await AskAuthorDetails(author);
+        if (author == null) return null;
 
         try
         {
@@ -72,6 +80,40 @@ public class AuthorFlow : FlowBase
         return author;
     }
 
+    public async Task UpdateAuthor()
+    {
+        Console.WriteLine("=== Edit author ===\n");
+
+        int selectAuthorId = await ConsoleHelper.AskUntilValid(
+            "Select author to edit by author id",
+            "Invalid author id",
+            async input => await _dbService.AuthorExists(int.Parse(input)),
+            input => int.Parse(input));
+
+        var author = await _dbService.GetAuthor(selectAuthorId);
+
+        if (author == null)
+        {
+            Console.WriteLine("Couldn't fetch author;");
+            return;
+        }
+
+        if (ConsoleHelper.IsActionCanceled(selectAuthorId)) return;
+
+        author = await AskAuthorDetails(author);
+        if (author == null) return;
+
+        try
+        {
+            await _dbService.UpdateAuthor(author);
+            Console.WriteLine("Author was successfully added");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("Database could not be updated.");
+            Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+        }
+    }
     public async Task DeleteAuthorFlow()
     {
         Console.WriteLine("\n--- Delete author from database ---\n");

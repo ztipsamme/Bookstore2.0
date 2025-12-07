@@ -18,6 +18,7 @@ public class AuthorMenu
             {
                 new ("List all authors",  () => _authorFlow.ListAllAuthorsFlow()),
                 new ("Add author", ()=> _authorFlow.AddNewAuthorToDbFlow()),
+                new ("Edit author", ()=> _authorFlow.UpdateAuthor()),
                 new ("Delete author", ()=> _authorFlow.DeleteAuthorFlow()),
             };
 
