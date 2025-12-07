@@ -147,9 +147,9 @@ public class PublisherFlow : FlowBase
         Console.WriteLine("\n--- Select or create a new publisher ---\n");
 
         List<Publisher> publishers = await _dbService.Publishers.GetAllPublishers();
-        int CreateNewAuthorIdx = 1;
+        int CreateNewPublisherIdx = 1;
 
-        Console.WriteLine($"{CreateNewAuthorIdx}. Create new publisher");
+        Console.WriteLine($"{CreateNewPublisherIdx}. Create new publisher");
         for (int i = 0; i < publishers.Count; i++)
         {
             var publisher = publishers[i];
@@ -165,7 +165,7 @@ public class PublisherFlow : FlowBase
 
         if (ConsoleHelper.IsActionCanceled(idx)) return (null, true);
 
-        if (idx == CreateNewAuthorIdx)
+        if (idx == CreateNewPublisherIdx)
         {
             Publisher? newPublisher = await AddNewPublisherToDbFlow();
             return (newPublisher, false);
