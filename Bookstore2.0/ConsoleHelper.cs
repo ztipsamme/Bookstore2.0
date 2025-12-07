@@ -51,7 +51,10 @@ public static class ConsoleHelper
         }
     }
 
-    public static string? AskUntilValid(string prompt, string errMessage, string defaultInput = "")
+    public static string? AskUntilValid(
+        string prompt,
+        string errMessage,
+        string defaultInput = "")
     {
         int startRow = GetStartRow;
         string input = defaultInput;
@@ -72,7 +75,12 @@ public static class ConsoleHelper
         }
     }
 
-    public static T? AskUntilValid<T>(string prompt, string errMessage, Func<string, bool>? validate = null, Func<string, T>? convert = null, string defaultInput = "")
+    public static T? AskUntilValid<T>(
+        string prompt,
+        string errMessage,
+        Func<string, bool>? validate = null,
+        Func<string, T>? convert = null,
+        string defaultInput = "")
     {
         int startRow = GetStartRow;
         string input = defaultInput;
@@ -99,7 +107,11 @@ public static class ConsoleHelper
         }
     }
 
-    public static async Task<T?> AskUntilValid<T>(string prompt, string errMessage, Func<string, Task<bool>>? validate = null, Func<string, T>? convert = null, string defaultInput = "")
+    public static async Task<T?> AskUntilValid<T>(
+        string prompt, string errMessage,
+        Func<string, Task<bool>>? validate = null,
+        Func<string, T>? convert = null,
+        string defaultInput = "")
     {
         int startRow = GetStartRow;
         string input = defaultInput;
@@ -118,6 +130,39 @@ public static class ConsoleHelper
             if (isValid)
             {
                 if (convert != null) return convert(input);
+                return (T)(object)input;
+            }
+
+            Console.WriteLine($"{errMessage}");
+            Thread.Sleep(1600);
+
+            ClearBelow(startRow - 1);
+        }
+    }
+
+    public static async Task<T?> AskUntilValid<T>(
+        string prompt, string errMessage,
+        Func<string, Task<bool>>? validate = null,
+        Func<string, Task<T?>>? convert = null,
+        string defaultInput = "")
+    {
+        int startRow = GetStartRow;
+        string input = defaultInput;
+
+        while (true)
+        {
+            var res = HandleInput(prompt, input);
+            input = res.input;
+
+            if (res.isCanceled) return default;
+
+            bool isValid = validate == null
+                ? !string.IsNullOrWhiteSpace(input)
+                : await validate(input);
+
+            if (isValid)
+            {
+                if (convert != null) return await convert(input);
                 return (T)(object)input;
             }
 

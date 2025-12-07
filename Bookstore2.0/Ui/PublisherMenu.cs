@@ -21,8 +21,7 @@ public class PublisherMenu
                 .ListAllPublishersFlow()),
                 new ("Add publisher", ()=> _publisherFlow
                 .AddNewPublisherToDbFlow()),
-                // new ("Delete author", ()=> _publisherFlow
-                // .DeleteAuthor()),
+                new ("Delete author", ()=> _publisherFlow.DeletePublisherFlow()),
             };
 
         await ConsoleHelper.ChooseFromMenu("Publisher menu", menu);

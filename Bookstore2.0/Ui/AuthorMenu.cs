@@ -18,7 +18,7 @@ public class AuthorMenu
             {
                 new ("List all authors",  () => _authorFlow.ListAllAuthorsFlow()),
                 new ("Add author", ()=> _authorFlow.AddNewAuthorToDbFlow()),
-                // new ("Delete author", ()=> _authorFlow.DeleteAuthor()),
+                new ("Delete author", ()=> _authorFlow.DeleteAuthorFlow()),
             };
 
         await ConsoleHelper.ChooseFromMenu("Author menu", menu);

@@ -98,6 +98,11 @@ public class DbService
         return await _db.Authors.AnyAsync(a => a.FirstName == firstName && a.LastName == lastName);
     }
 
+    public async Task<bool> AuthorExists(int authorId)
+    {
+        return await _db.Authors.AnyAsync(a => a.AuthorId == authorId);
+    }
+
     public async Task<bool> BookExists(long isbn13)
     {
         return await _db.Books.AnyAsync(b => b.Isbn13 == isbn13);
@@ -165,6 +170,16 @@ public class DbService
         return true;
     }
 
+    public async Task<bool> DeleteBooksByAuthorId(int authorId)
+    {
+        await _db.Books
+        .Where(b => b.AuthorId == authorId)
+        .ExecuteDeleteAsync();
+        await _db.SaveChangesAsync();
+
+        return true;
+    }
+
     public async Task<bool> DeletePublisher(int id)
     {
         var publisher = await GetPublisher(id);
@@ -172,6 +187,14 @@ public class DbService
 
         _db.Publishers.Remove(publisher);
         await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteBooksByPublisherId(int publisherId)
+    {
+        await _db.Books.Where(a => a.PublisherId == publisherId).ExecuteDeleteAsync();
+        await _db.SaveChangesAsync();
+
         return true;
     }
 
@@ -199,6 +222,23 @@ public class DbService
              .Where(i => i.Isbn13 == isbn13)
              .ExecuteDeleteAsync();
 
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteBooksInAllInventoriesByAuthorId(int authorId)
+    {
+        await _db.Inventories
+       .Where(i => i.Isbn13Navigation.AuthorId == authorId)
+       .ExecuteDeleteAsync();
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteBooksInAllInventoriesByPublisherId(int publisherId)
+    {
+        await _db.Inventories.Where(i => i.Isbn13Navigation.PublisherId == publisherId).ExecuteDeleteAsync();
         await _db.SaveChangesAsync();
         return true;
     }

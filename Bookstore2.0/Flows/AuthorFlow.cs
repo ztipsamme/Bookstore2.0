@@ -21,7 +21,7 @@ public class AuthorFlow : FlowBase
 
         foreach (var author in authors)
         {
-            Console.WriteLine($"{author.LastName}, {author.FirstName} – Born {author.Birthday}");
+            Console.WriteLine($"{author.LastName}, {author.FirstName} ({author.AuthorId}) – Born {author.Birthday}");
         }
     }
 
@@ -70,6 +70,47 @@ public class AuthorFlow : FlowBase
         }
 
         return author;
+    }
+
+    public async Task DeleteAuthorFlow()
+    {
+        Console.WriteLine("\n--- Delete author from database ---\n");
+
+        int selectAuthorId = await ConsoleHelper.AskUntilValid(
+            "Select author to delete by author id",
+            "Invalid author id",
+            async input => await _dbService.AuthorExists(int.Parse(input)),
+            input => int.Parse(input));
+
+        if (ConsoleHelper.IsActionCanceled(selectAuthorId)) return;
+
+        Console.WriteLine("!Warning: To delete an author you must delete all instance where the author is referenced. This includes:" +
+            "- Deletion of all books by the author in the inventory" +
+            "- Deletion of all books by the author in the database");
+
+        bool deleteAuthor = ConsoleHelper.AskUntilValid("Are you sure that you want to delete the author? (y/n): ",
+        "Invalid input",
+        input => input.ToLower() == "y" || input.ToLower() == "n",
+        input => input.ToLower() == "y" ? true : false
+        );
+
+        try
+        {
+            await _dbService.DeleteBooksInAllInventoriesByAuthorId(selectAuthorId);
+            await _dbService.DeleteBooksByAuthorId(selectAuthorId);
+            await _dbService.DeleteAuthor(selectAuthorId);
+            Console.WriteLine("Author was successfully deleted");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("Delete failed because the author is referenced somewhere.");
+            Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine("Internal EF error: " + ex.Message);
+            Console.WriteLine("Tip: You may be deleting an entity while another instance with the same key is tracked.");
+        }
     }
 
     public async Task<(Author? author, bool isCanceled)> SelectAuthorFlow(int? currentAuthorId = null)
