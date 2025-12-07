@@ -24,6 +24,7 @@ public class BookStore
             new ("Manage books", ManageBooks),
             new ("Manage authors", ManageAuthors),
             new ("Manage publishers", ManagePublishers),
+            new ("Quit", QuitProgram),
         };
 
         while (true)
@@ -71,5 +72,12 @@ public class BookStore
     {
         var publisherMenu = new PublisherMenu(_dbService);
         await publisherMenu.Show();
+    }
+
+    private Task QuitProgram()
+    {
+        Console.WriteLine("\nGoodbye, until next time!");
+        Environment.Exit(0);
+        return Task.CompletedTask;
     }
 }
