@@ -47,7 +47,7 @@ public class StoreFlow : FlowBase
         Console.WriteLine("=== Stores ===\n");
         Console.WriteLine("Select a store to view it's inventory\n");
 
-        var stores = await _dbService.GetAllStores();
+        var stores = await _dbService.Stores.GetAllStores();
 
         for (int i = 0; i < stores.Count; i++)
             Console.WriteLine($"{i + 1}. {stores[i].Name}");

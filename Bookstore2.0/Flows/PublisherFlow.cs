@@ -17,7 +17,7 @@ public class PublisherFlow : FlowBase
         Console.WriteLine("=== List all publishers ===\n");
         Console.WriteLine("All publishers in the database\n");
 
-        var publishers = await _dbService.GetAllPublishers();
+        var publishers = await _dbService.Publishers.GetAllPublishers();
 
         foreach (var publisher in publishers)
         {
@@ -33,7 +33,7 @@ public class PublisherFlow : FlowBase
         if (name == null || ConsoleHelper.IsActionCanceled(name)) return null;
 
 
-        if (await _dbService.PublisherExists(name))
+        if (await _dbService.Publishers.PublisherExists(name))
         {
             Console.WriteLine("Publisher already exists.");
             return null;
@@ -54,7 +54,7 @@ public class PublisherFlow : FlowBase
 
         try
         {
-            await _dbService.AddPublisher(publisher);
+            await _dbService.Publishers.AddPublisher(publisher);
             Console.WriteLine("New publisher was successfully added");
         }
         catch (DbUpdateException ex)
@@ -73,10 +73,10 @@ public class PublisherFlow : FlowBase
         int selectPublisherId = await ConsoleHelper.AskUntilValid(
             "Select publisher to edit by publisher id",
             "Invalid publisher id",
-            async input => await _dbService.PublisherExists(int.Parse(input)),
+            async input => await _dbService.Publishers.PublisherExists(int.Parse(input)),
             input => int.Parse(input));
 
-        var publisher = await _dbService.GetPublisher(selectPublisherId);
+        var publisher = await _dbService.Publishers.GetPublisher(selectPublisherId);
 
         if (publisher == null)
         {
@@ -91,7 +91,7 @@ public class PublisherFlow : FlowBase
 
         try
         {
-            await _dbService.UpdatePublisher(publisher);
+            await _dbService.Publishers.UpdatePublisher(publisher);
             Console.WriteLine("Publisher was successfully added");
         }
         catch (DbUpdateException ex)
@@ -108,7 +108,7 @@ public class PublisherFlow : FlowBase
         int selectPublisherId = await ConsoleHelper.AskUntilValid(
             "Select publisher to delete by publisher id",
             "Invalid publisher id",
-            async input => await _dbService.AuthorExists(int.Parse(input)),
+            async input => await _dbService.Publishers.PublisherExists(int.Parse(input)),
             input => int.Parse(input));
 
         if (ConsoleHelper.IsActionCanceled(selectPublisherId)) return;
@@ -125,9 +125,9 @@ public class PublisherFlow : FlowBase
 
         try
         {
-            await _dbService.DeleteBooksInAllInventoriesByPublisherId(selectPublisherId);
-            await _dbService.DeleteBooksByPublisherId(selectPublisherId);
-            await _dbService.DeletePublisher(selectPublisherId);
+            await _dbService.Inventory.DeleteAllInventoriesByPublisherId(selectPublisherId);
+            await _dbService.Books.DeleteBooksByPublisherId(selectPublisherId);
+            await _dbService.Publishers.DeletePublisher(selectPublisherId);
             Console.WriteLine("Publisher was successfully deleted");
         }
         catch (DbUpdateException ex)
@@ -146,7 +146,7 @@ public class PublisherFlow : FlowBase
     {
         Console.WriteLine("\n--- Select or create a new publisher ---\n");
 
-        List<Publisher> publishers = await _dbService.GetAllPublishers();
+        List<Publisher> publishers = await _dbService.Publishers.GetAllPublishers();
         int CreateNewAuthorIdx = 1;
 
         Console.WriteLine($"{CreateNewAuthorIdx}. Create new publisher");

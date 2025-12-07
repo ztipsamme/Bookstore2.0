@@ -16,7 +16,7 @@ public class InventoryFlow : FlowBase
     {
         Console.Clear();
 
-        var items = await _dbService.GetStoreInventory(store.StoreId);
+        var items = await _dbService.Inventory.GetInventoryByStoreId(store.StoreId);
 
         Console.WriteLine($"\nInventory for {store.Name}:\n");
 
@@ -74,10 +74,10 @@ public class InventoryFlow : FlowBase
 
         if (ConsoleHelper.IsActionCanceled(quantity)) return;
 
-        var inventory = await _dbService.GetBookInInventory(storeId, isbn13);
+        var inventory = await _dbService.Inventory.GetBookInInventory(storeId, isbn13);
 
-        var books = await _dbService.GetBook(isbn13);
-        var store = await _dbService.GetStore(storeId);
+        var books = await _dbService.Books.GetBook(isbn13);
+        var store = await _dbService.Stores.GetStore(storeId);
 
         try
         {
@@ -90,7 +90,7 @@ public class InventoryFlow : FlowBase
                     Quantity = quantity,
                 };
 
-                await _dbService.AddInventory(inventory);
+                await _dbService.Inventory.AddInventory(inventory);
             }
             else
             {
@@ -113,7 +113,7 @@ public class InventoryFlow : FlowBase
 
         if (ConsoleHelper.IsActionCanceled(isbn13)) return;
 
-        var inventory = await _dbService.GetBookInInventory(storeId, isbn13);
+        var inventory = await _dbService.Inventory.GetBookInInventory(storeId, isbn13);
 
         if (inventory == null)
         {
@@ -173,7 +173,7 @@ public class InventoryFlow : FlowBase
 
         if (choice?.ToLower() == "yes")
         {
-            await _dbService.DeleteRowInInventory(inventory.StoreId, inventory.Isbn13);
+            await _dbService.Inventory.DeleteInventoryRow(inventory.StoreId, inventory.Isbn13);
             Console.WriteLine("\nBook removed from inventory entirely.");
         }
         else

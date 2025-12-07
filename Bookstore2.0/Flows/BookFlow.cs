@@ -22,7 +22,7 @@ public class BookFlow : FlowBase
         Console.WriteLine("=== List all books ===\n");
         Console.WriteLine("All books in the database\n");
 
-        var books = await _dbService.GetAllBooks();
+        var books = await _dbService.Books.GetAllBooks();
 
         foreach (var book in books)
         {
@@ -93,7 +93,7 @@ public class BookFlow : FlowBase
             async input =>
                 input.Length == 13 &&
                 long.TryParse(input, out long value) &&
-                !await _dbService.BookExists(value),
+                !await _dbService.Books.BookExists(value),
             input => long.Parse(input)
         );
 
@@ -111,7 +111,7 @@ public class BookFlow : FlowBase
 
         try
         {
-            await _dbService.AddBook(book);
+            await _dbService.Books.AddBook(book);
             Console.WriteLine("New book was successfully added");
         }
         catch (DbUpdateException ex)
@@ -132,7 +132,7 @@ public class BookFlow : FlowBase
 
         if (ConsoleHelper.IsActionCanceled(selectedIsbn13)) return;
 
-        var book = await _dbService.GetBook(selectedIsbn13);
+        var book = await _dbService.Books.GetBook(selectedIsbn13);
 
         if (book == null)
         {
@@ -155,7 +155,7 @@ public class BookFlow : FlowBase
 
             if (value == book.Isbn13) return true;
 
-            return !await _dbService.BookExists(value);
+            return !await _dbService.Books.BookExists(value);
         },
         input => long.Parse(input), defaultInput: book.Isbn13.ToString());
 
@@ -170,7 +170,7 @@ public class BookFlow : FlowBase
 
         try
         {
-            await _dbService.UpdateBook(book);
+            await _dbService.Books.UpdateBook(book);
             Console.WriteLine("Book was successfully added");
         }
         catch (DbUpdateException ex)
@@ -205,8 +205,8 @@ public class BookFlow : FlowBase
 
         try
         {
-            await _dbService.DeleteBookInAllInventories(selectedIsbn13);
-            await _dbService.DeleteBook(selectedIsbn13);
+            await _dbService.Inventory.DeleteAllInventoriesByIsbn13(selectedIsbn13);
+            await _dbService.Books.DeleteBook(selectedIsbn13);
             Console.WriteLine("Book was successfully deleted");
         }
         catch (DbUpdateException ex)

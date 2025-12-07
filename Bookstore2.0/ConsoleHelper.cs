@@ -180,7 +180,7 @@ public static class ConsoleHelper
             {
                 return input.Length == 13
                        && long.TryParse(input, out long value)
-                       && await dbService.BookExists(value);
+                       && await dbService.Books.BookExists(value);
             },
             input => long.Parse(input));
     }

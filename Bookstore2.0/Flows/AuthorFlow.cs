@@ -17,7 +17,7 @@ public class AuthorFlow : FlowBase
         Console.WriteLine("=== List all authors ===\n");
         Console.WriteLine("All authors in the database\n");
 
-        var authors = await _dbService.GetAllAuthors();
+        var authors = await _dbService.Authors.GetAllAuthors();
 
         foreach (var author in authors)
         {
@@ -37,7 +37,7 @@ public class AuthorFlow : FlowBase
 
         if (lastName == null || ConsoleHelper.IsActionCanceled(lastName)) return null;
 
-        if (await _dbService.AuthorExists(firstName, lastName))
+        if (await _dbService.Authors.AuthorExists(firstName, lastName))
         {
             Console.WriteLine("Author already exists.");
             return null;
@@ -68,7 +68,7 @@ public class AuthorFlow : FlowBase
 
         try
         {
-            await _dbService.AddAuthor(author);
+            await _dbService.Authors.AddAuthor(author);
             Console.WriteLine("New author was successfully added");
         }
         catch (DbUpdateException ex)
@@ -87,10 +87,10 @@ public class AuthorFlow : FlowBase
         int selectAuthorId = await ConsoleHelper.AskUntilValid(
             "Select author to edit by author id",
             "Invalid author id",
-            async input => await _dbService.AuthorExists(int.Parse(input)),
+            async input => await _dbService.Authors.AuthorExists(int.Parse(input)),
             input => int.Parse(input));
 
-        var author = await _dbService.GetAuthor(selectAuthorId);
+        var author = await _dbService.Authors.GetAuthor(selectAuthorId);
 
         if (author == null)
         {
@@ -105,7 +105,7 @@ public class AuthorFlow : FlowBase
 
         try
         {
-            await _dbService.UpdateAuthor(author);
+            await _dbService.Authors.UpdateAuthor(author);
             Console.WriteLine("Author was successfully added");
         }
         catch (DbUpdateException ex)
@@ -121,7 +121,7 @@ public class AuthorFlow : FlowBase
         int selectAuthorId = await ConsoleHelper.AskUntilValid(
             "Select author to delete by author id",
             "Invalid author id",
-            async input => await _dbService.AuthorExists(int.Parse(input)),
+            async input => await _dbService.Authors.AuthorExists(int.Parse(input)),
             input => int.Parse(input));
 
         if (ConsoleHelper.IsActionCanceled(selectAuthorId)) return;
@@ -138,9 +138,9 @@ public class AuthorFlow : FlowBase
 
         try
         {
-            await _dbService.DeleteBooksInAllInventoriesByAuthorId(selectAuthorId);
-            await _dbService.DeleteBooksByAuthorId(selectAuthorId);
-            await _dbService.DeleteAuthor(selectAuthorId);
+            await _dbService.Inventory.DeleteAllInventoriesByAuthorId(selectAuthorId);
+            await _dbService.Books.DeleteBooksByAuthorId(selectAuthorId);
+            await _dbService.Authors.DeleteAuthor(selectAuthorId);
             Console.WriteLine("Author was successfully deleted");
         }
         catch (DbUpdateException ex)
@@ -159,7 +159,7 @@ public class AuthorFlow : FlowBase
     {
         Console.WriteLine("\n--- Select or create a new author ---\n");
 
-        List<Author> authors = await _dbService.GetAllAuthors();
+        List<Author> authors = await _dbService.Authors.GetAllAuthors();
         int CreateNewAuthorIdx = 1;
 
         Console.WriteLine($"{CreateNewAuthorIdx}. Create new author");
